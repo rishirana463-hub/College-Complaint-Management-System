@@ -1,0 +1,63 @@
+.campus-book {
+  position: relative;
+  width: 360px;
+  height: 255px;
+  max-width: 100%;
+  margin-top: 18px;
+  outline: none;
+  cursor: grab;
+}
+
+.campus-book:active {
+  cursor: grabbing;
+}
+
+.campus-book canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.book-interaction-label {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  transform: translateX(-50%);
+  padding: 7px 13px;
+  border: 1px solid rgba(201, 242, 139, 0.2);
+  border-radius: 999px;
+  background: rgba(24, 34, 25, 0.65);
+  backdrop-filter: blur(10px);
+  color: rgba(231, 243, 213, 0.72);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.book-interaction-label.is-visible,
+.campus-book:focus-visible .book-interaction-label.is-visible {
+  opacity: 1;
+}
+
+.campus-book:focus-visible {
+  border-radius: 20px;
+  box-shadow: 0 0 0 2px rgba(201, 242, 139, 0.5);
+}
+
+@media (max-width: 1200px) {
+  .campus-book {
+    width: 315px;
+    height: 230px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campus-book {
+    cursor: pointer;
+  }
+
+  .campus-book canvas {
+    filter: saturate(0.85);
+  }
+}

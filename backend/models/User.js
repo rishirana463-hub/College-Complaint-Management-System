@@ -17,8 +17,15 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.supabaseId;
+      },
       minlength: 6,
+    },
+    supabaseId: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
     role: {
       type: String,
@@ -28,11 +35,11 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 userSchema.pre("save", async function hashPassword(next) {
-  if (!this.isModified("password")) {
+  if (!this.isModified("password") || !this.password) {
     next();
     return;
   }
@@ -42,7 +49,10 @@ userSchema.pre("save", async function hashPassword(next) {
   next();
 });
 
-userSchema.methods.matchPassword = async function matchPassword(enteredPassword) {
+userSchema.methods.matchPassword = async function matchPassword(
+  enteredPassword,
+) {
+  if (!this.password) return false;
   return bcrypt.compare(enteredPassword, this.password);
 };
 

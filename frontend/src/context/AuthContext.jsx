@@ -1,60 +1,94 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import api from "../services/api";
-
+import { readStored, writeStored } from "../lib/storage";
+import { clearGoogleSession } from "../services/googleAuth";
 const AuthContext = createContext(null);
-
-export const AuthProvider = ({ children }) => {
-  const [auth, setAuth] = useState(() => {
-    const stored = localStorage.getItem("ccms_auth");
-    return stored ? JSON.parse(stored) : { user: null, token: null };
-  });
+const empty = { user: null, token: null };
+export function AuthProvider({ children }) {
+  const [auth, setAuth] = useState(() => readStored("ccms_auth", empty));
   const [loading, setLoading] = useState(true);
-
+  const [sessionError, setSessionError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  const generation = useRef(0);
+  const login = (payload) => {
+    generation.current++;
+    writeStored("ccms_auth", payload);
+    setAuth(payload);
+    setSessionError("");
+    setLoading(false);
+  };
+  const logout = () => {
+    generation.current++;
+    writeStored("ccms_auth", null);
+    setAuth(empty);
+    setLoading(false);
+    setSessionError("");
+    void clearGoogleSession().catch(() => {});
+  };
   useEffect(() => {
-    const syncProfile = async () => {
-      if (!auth.token) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const { data } = await api.get("/auth/profile");
-        const updatedAuth = { ...auth, user: data };
-        setAuth(updatedAuth);
-        localStorage.setItem("ccms_auth", JSON.stringify(updatedAuth));
-      } catch (_error) {
-        localStorage.removeItem("ccms_auth");
-        setAuth({ user: null, token: null });
-      } finally {
-        setLoading(false);
+    const expired = () => logout();
+    const sync = (event) => {
+      if (event.key === "ccms_auth") {
+        setAuth(readStored("ccms_auth", empty));
+        setAttempt((a) => a + 1);
       }
     };
-
-    syncProfile();
+    window.addEventListener("ccms:expired", expired);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("ccms:expired", expired);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
-
-  const saveAuth = (payload) => {
-    setAuth(payload);
-    localStorage.setItem("ccms_auth", JSON.stringify(payload));
-  };
-
-  const logout = () => {
-    localStorage.removeItem("ccms_auth");
-    setAuth({ user: null, token: null });
-  };
-
-  const value = useMemo(
-    () => ({
-      auth,
-      loading,
-      login: saveAuth,
-      logout,
-      isAuthenticated: Boolean(auth.token),
-    }),
-    [auth, loading]
+  useEffect(() => {
+    const stored = readStored("ccms_auth", empty);
+    if (!stored.token) {
+      setLoading(false);
+      setSessionError("");
+      return;
+    }
+    const current = ++generation.current;
+    const controller = new AbortController();
+    setLoading(true);
+    setSessionError("");
+    api
+      .get("/auth/profile", { signal: controller.signal })
+      .then(({ data }) => {
+        if (generation.current === current) {
+          const next = { token: stored.token, user: data };
+          setAuth(next);
+          writeStored("ccms_auth", next);
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted && generation.current === current)
+          setSessionError(
+            error.response?.data?.message ||
+              "We couldn't verify your session. Check your connection and retry.",
+          );
+      })
+      .finally(() => {
+        if (generation.current === current) setLoading(false);
+      });
+    return () => {
+      controller.abort();
+      generation.current++;
+    };
+  }, [attempt]);
+  return (
+    <AuthContext.Provider
+      value={{
+        auth,
+        loading,
+        sessionError,
+        retrySession: () => setAttempt((a) => a + 1),
+        login,
+        logout,
+        isAuthenticated: Boolean(auth?.token && auth?.user),
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
+}
 export const useAuth = () => useContext(AuthContext);

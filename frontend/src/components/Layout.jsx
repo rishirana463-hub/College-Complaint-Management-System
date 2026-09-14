@@ -1,30 +1,181 @@
+import { Suspense, useEffect, useState } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { motion, useReducedMotion } from "framer-motion";
+import { Menu, Search, Sun, Moon, ChevronDown, Bell } from "lucide-react";
 import Sidebar from "./Sidebar";
-
-const Layout = ({ title, subtitle, children, actions }) => {
+import CommandPalette from "./CommandPalette";
+import Dialog from "./Dialog";
+import { ErrorBoundary, Skeleton } from "./States";
+import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
+import { navigationFor } from "../lib/navigation";
+import { googleConfigured, startGoogleSignIn } from "../services/googleAuth";
+import { useToast } from "../context/ToastContext";
+import useResource from "../hooks/useResource";
+export default function Layout() {
+  const { auth } = useAuth();
+  const { notify } = useToast();
+  const { theme, preference, setPreference, toggleTheme } = useTheme();
+  const location = useLocation();
+  const reduced = useReducedMotion();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
+  const inbox = useResource("/tickets/inbox");
+  useEffect(() => {
+    const refresh = () => {
+      if (!document.hidden) inbox.reload();
+    };
+    const timer = setInterval(refresh, 30000);
+    window.addEventListener("ccms:inbox", refresh);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("ccms:inbox", refresh);
+    };
+  }, [inbox.reload]);
+  const title =
+    navigationFor(auth.user.role).find(
+      (item) => item.path === location.pathname,
+    )?.label || "Ticket details";
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCommandOpen((value) => !value);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+  useEffect(() => {
+    document.title = title + " | Campusdesk";
+    setMobileOpen(false);
+  }, [location.pathname, title]);
   return (
-    <div className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(61,131,114,0.22),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(15,23,42,0.14),_transparent_30%),linear-gradient(180deg,_#f7fbfa_0%,_#edf5f3_52%,_#e8f0ef_100%)] p-4 md:p-8">
-      <div className="pointer-events-none absolute inset-0 opacity-50">
-        <div className="absolute left-[7%] top-24 h-40 w-40 rounded-full bg-brand-200/50 blur-3xl" />
-        <div className="absolute bottom-16 right-[12%] h-56 w-56 rounded-full bg-slate-300/60 blur-3xl" />
-      </div>
-      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[280px_1fr]">
+    <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
+      <aside className="desktop-sidebar">
         <Sidebar />
-        <main className="relative space-y-6">
-          <section className="card overflow-hidden border-white/70 bg-white/80">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-sm font-medium uppercase tracking-[0.25em] text-brand-600">Portal</p>
-                <h1 className="mt-2 text-3xl font-bold text-slate-900">{title}</h1>
-                {subtitle && <p className="mt-2 max-w-2xl text-sm text-slate-600">{subtitle}</p>}
+      </aside>
+      <div className="workspace-main">
+        <header className="topbar">
+          <div className="breadcrumb">
+            <button
+              className="icon-button mobile-menu"
+              aria-label="Open navigation"
+              onClick={() => setMobileOpen(true)}
+            >
+              <Menu size={21} />
+            </button>
+            <span className="breadcrumb-workspace">Workspace</span>
+            <span className="breadcrumb-divider">/</span>
+            <strong>{title}</strong>
+          </div>
+          <div className="topbar-actions">
+            <button
+              className="command-trigger"
+              onClick={() => setCommandOpen(true)}
+            >
+              <Search size={17} />
+              <span className="command-label">Quick search...</span>
+              <kbd>Ctrl K</kbd>
+            </button>
+            <Link
+              className="icon-button inbox-trigger"
+              to="/inbox"
+              aria-label={
+                "Open inbox" +
+                (inbox.data?.some((e) => !e.read) ? ", unread updates" : "")
+              }
+            >
+              <Bell size={19} />
+              {inbox.data?.some((e) => !e.read) && (
+                <span className="unread-dot" />
+              )}
+            </Link>
+            <button
+              className="icon-button"
+              aria-label={
+                "Switch to " + (theme === "dark" ? "light" : "dark") + " theme"
+              }
+              onClick={toggleTheme}
+            >
+              {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <details className="profile-menu">
+              <summary aria-label="Account and appearance">
+                <span className="avatar">
+                  {auth.user.name?.slice(0, 1).toUpperCase()}
+                </span>
+                <ChevronDown size={15} />
+              </summary>
+              <div className="profile-popover">
+                <strong>{auth.user.name}</strong>
+                <small>{auth.user.email}</small>
+                <span className="role-label">{auth.user.role}</span>
+                <label>
+                  Appearance
+                  <select
+                    className="input"
+                    value={preference}
+                    onChange={(e) => setPreference(e.target.value)}
+                  >
+                    <option value="system">System preference</option>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                </label>
+                {googleConfigured && !auth.user.googleConnected && (
+                  <button
+                    className="btn-secondary full-width connect-google"
+                    onClick={() =>
+                      startGoogleSignIn().catch((error) =>
+                        notify(error.message, "error"),
+                      )
+                    }
+                  >
+                    Connect Google
+                  </button>
+                )}
+                {auth.user.googleConnected && (
+                  <p className="field-hint">Google account connected</p>
+                )}
               </div>
-              {actions}
-            </div>
-          </section>
-          {children}
+            </details>
+          </div>
+        </header>
+        <main id="main-content" className="main-content" tabIndex={-1}>
+          <ErrorBoundary resetKey={location.pathname}>
+            <Suspense fallback={<Skeleton />}>
+              <motion.div
+                key={location.pathname}
+                initial={reduced ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.16 }}
+              >
+                <Outlet />
+              </motion.div>
+            </Suspense>
+          </ErrorBoundary>
+          <footer className="content-footer">
+            <span>Small actions. Better campus.</span>
+            <span>College Complaint & Ticket Management</span>
+          </footer>
         </main>
       </div>
+      <Dialog
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        title="Navigation"
+        className="mobile-nav-dialog"
+      >
+        <Sidebar onNavigate={() => setMobileOpen(false)} />
+      </Dialog>
+      <CommandPalette
+        open={commandOpen}
+        onClose={() => setCommandOpen(false)}
+      />
     </div>
   );
-};
-
-export default Layout;
+}

@@ -1,36 +1,70 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import DashboardPage from "./pages/DashboardPage";
-import SubmitTicketPage from "./pages/SubmitTicketPage";
-import TicketsPage from "./pages/TicketsPage";
-import AdminDashboardPage from "./pages/AdminDashboardPage";
+import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { Skeleton } from "./components/States";
 import { useAuth } from "./context/AuthContext";
-
-const App = () => {
-  const { auth, isAuthenticated } = useAuth();
-
+import { homeFor } from "./lib/navigation";
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const RegisterPage = lazy(() => import("./pages/RegisterPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const SubmitTicketPage = lazy(() => import("./pages/SubmitTicketPage"));
+const TicketsPage = lazy(() => import("./pages/TicketsPage"));
+const TicketDetailPage = lazy(() => import("./pages/TicketDetailPage"));
+const OAuthCallbackPage = lazy(() => import("./pages/OAuthCallbackPage"));
+const ActivityPage = lazy(() => import("./pages/ActivityPage"));
+const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
+export default function App() {
+  const { auth, isAuthenticated, loading } = useAuth();
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to={isAuthenticated ? (auth.user?.role === "admin" ? "/admin" : auth.user?.role === "faculty" ? "/tickets" : "/dashboard") : "/login"} replace />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-
-      <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/submit" element={<SubmitTicketPage />} />
-      </Route>
-
-      <Route element={<ProtectedRoute allowedRoles={["student", "admin", "faculty"]} />}>
-        <Route path="/tickets" element={<TicketsPage />} />
-      </Route>
-
-      <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-        <Route path="/admin" element={<AdminDashboardPage />} />
-      </Route>
-    </Routes>
+    <Suspense
+      fallback={
+        <div className="session-screen">
+          <Skeleton />
+        </div>
+      }
+    >
+      <Routes>
+        <Route
+          path="/"
+          element={
+            loading ? (
+              <div className="session-screen">
+                <Skeleton />
+              </div>
+            ) : (
+              <Navigate
+                to={isAuthenticated ? homeFor(auth.user.role) : "/login"}
+                replace
+              />
+            )
+          }
+        />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+        <Route
+          element={
+            <ProtectedRoute allowedRoles={["student", "faculty", "admin"]} />
+          }
+        >
+          <Route element={<Layout />}>
+            <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/submit" element={<SubmitTicketPage />} />
+            </Route>
+            <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+              <Route path="/admin" element={<DashboardPage />} />
+            </Route>
+            <Route path="/tickets" element={<TicketsPage />} />
+            <Route path="/inbox" element={<ActivityPage key="inbox" inbox />} />
+            <Route path="/activity" element={<ActivityPage key="activity" />} />
+            <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/tickets/:id" element={<TicketDetailPage />} />
+          </Route>
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
-};
-
-export default App;
+}

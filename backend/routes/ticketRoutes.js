@@ -8,6 +8,9 @@ import {
   getTicketById,
   getTickets,
   updateTicket,
+  getActivity,
+  getInbox,
+  markInboxRead,
 } from "../controllers/ticketController.js";
 import { authorize, protect } from "../middleware/authMiddleware.js";
 
@@ -17,6 +20,9 @@ router.use(protect);
 
 router.get("/", getTickets);
 router.post("/", authorize("student", "admin"), createTicket);
+router.get("/activity", getActivity);
+router.get("/inbox", getInbox);
+router.post("/inbox/read", markInboxRead);
 router.get("/summary/admin", authorize("admin"), getAdminSummary);
 router.get("/faculty-users", authorize("student", "admin"), getFacultyUsers);
 router.get("/:id", getTicketById);

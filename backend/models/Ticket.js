@@ -21,7 +21,7 @@ const commentSchema = new mongoose.Schema(
       default: Date.now,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const ticketSchema = new mongoose.Schema(
@@ -43,7 +43,16 @@ const ticketSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ["Hostel", "IT", "Faculty", "Infrastructure", "Library", "Canteen", "Campus", "Other"],
+      enum: [
+        "Hostel",
+        "IT",
+        "Faculty",
+        "Infrastructure",
+        "Library",
+        "Canteen",
+        "Campus",
+        "Other",
+      ],
       required: true,
     },
     assignedFaculty: {
@@ -62,10 +71,38 @@ const ticketSchema = new mongoose.Schema(
       required: true,
     },
     comments: [commentSchema],
+    location: { type: String, trim: true, maxlength: 180, default: "" },
+    dueAt: { type: Date, default: null },
+    resolvedAt: { type: Date, default: null },
+    activity: [
+      {
+        actorId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        actorName: { type: String, required: true },
+        actorRole: {
+          type: String,
+          enum: ["student", "admin", "faculty"],
+          required: true,
+        },
+        kind: {
+          type: String,
+          enum: ["created", "updated", "comment"],
+          required: true,
+        },
+        summary: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   {
     timestamps: true,
-  }
+    optimisticConcurrency: true,
+  },
 );
 
+ticketSchema.index({ userId: 1, createdAt: -1 });
+ticketSchema.index({ category: 1, assignedFaculty: 1, createdAt: -1 });
 export default mongoose.model("Ticket", ticketSchema);
