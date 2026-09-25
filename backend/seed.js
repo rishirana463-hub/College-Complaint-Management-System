@@ -1,54 +1,29 @@
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 import connectDB from "./config/db.js";
-import User from "./models/User.js";
-import Ticket from "./models/Ticket.js";
+import { seedDemoData } from "./utils/demoData.js";
 
 dotenv.config();
 
-const seedData = async () => {
-  try {
-    await connectDB();
-    await Ticket.deleteMany();
-    await User.deleteMany();
-
-    const [admin, studentOne, studentTwo] = await User.create([
-      { name: "Admin User", email: "admin@college.com", password: "admin123", role: "admin" },
-      { name: "Rahul Sharma", email: "rahul@student.com", password: "student123", role: "student" },
-      { name: "Priya Verma", email: "priya@student.com", password: "student123", role: "student" }
-    ]);
-
-    await Ticket.create([
-      {
-        title: "Wi-Fi not working in Hostel Block A",
-        description: "Internet connectivity has been down for two days on the second floor.",
-        status: "In Progress",
-        category: "IT",
-        priority: "High",
-        userId: studentOne._id,
-        comments: [
-          { message: "Reported by student.", authorName: studentOne.name, authorRole: "student" },
-          { message: "Network team has been assigned.", authorName: admin.name, authorRole: "admin" }
-        ],
-      },
-      {
-        title: "Broken classroom projector",
-        description: "Projector in Lecture Hall 3 flickers continuously during classes.",
-        status: "Pending",
-        category: "Infrastructure",
-        priority: "Medium",
-        userId: studentTwo._id,
-        comments: [{ message: "Need this fixed before next week.", authorName: studentTwo.name, authorRole: "student" }],
-      },
-    ]);
-
-    console.log("Seed data inserted successfully");
-    console.log("Admin login: admin@college.com / admin123");
-    console.log("Student login: rahul@student.com / student123");
-    process.exit(0);
-  } catch (error) {
-    console.error("Seeding failed:", error.message);
-    process.exit(1);
-  }
-};
-
-seedData();
+try {
+  if (process.env.NODE_ENV === "production")
+    throw new Error("Demo data is disabled in production.");
+  if (!process.env.MONGO_URI)
+    throw new Error(
+      "No persistent demo database configured. Start the backend normally to use the temporary demo workspace.",
+    );
+  if (!process.argv.includes("--confirm-demo"))
+    throw new Error(
+      "This adds demo accounts with public passwords. Use npm run seed -- --confirm-demo only for a disposable development database.",
+    );
+  await connectDB();
+  const { added, examples } = await seedDemoData();
+  console.log(
+    `Added ${added} of ${examples} example complaints. Existing data was preserved.`,
+  );
+} catch (error) {
+  console.error(error.message);
+  process.exitCode = 1;
+} finally {
+  await mongoose.disconnect();
+}

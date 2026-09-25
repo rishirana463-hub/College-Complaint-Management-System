@@ -47,7 +47,7 @@ export default function GoogleButton({ disabled }) {
       </button>
       {!googleConfigured && (
         <p id="google-unavailable" className="google-unavailable">
-          Google sign-in is coming soon. Email sign-in is available below.
+          Google sign-in is not configured. Email sign-in is available below.
         </p>
       )}
     </>

@@ -26,6 +26,7 @@ const commentSchema = new mongoose.Schema(
 
 const ticketSchema = new mongoose.Schema(
   {
+    demoKey: { type: String, unique: true, sparse: true },
     title: {
       type: String,
       required: true,

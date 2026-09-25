@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "node --test test/*.test.js",
+    "test:google": "playwright test --config playwright.google.config.js",
     "test:e2e": "playwright test",
     "audit:lighthouse": "node scripts/lighthouse.mjs"
   },

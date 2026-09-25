@@ -1,42 +1,38 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { exchangeGoogleCode, clearGoogleSession } from "../services/googleAuth";
-import api from "../services/api";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  completeGoogleSignIn,
+  clearGoogleSession,
+} from "../services/googleAuth";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { homeFor } from "../lib/navigation";
 import { ErrorState, Skeleton } from "../components/States";
-let completion;
-function complete(code) {
-  if (!code)
-    return Promise.reject(
-      new Error(
-        "This sign-in link has expired. Please start again from the login page.",
-      ),
-    );
-  completion ||= exchangeGoogleCode(code).then((accessToken) =>
-    api.post("/auth/google", { accessToken }),
-  );
-  return completion;
-}
 export default function OAuthCallbackPage() {
   const [error, setError] = useState("");
   const { login } = useAuth();
   const { notify } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   useEffect(() => {
     let active = true;
-    const params = new URLSearchParams(window.location.search);
+    // Router location survives URL cleanup and StrictMode's second effect.
+    const params = new URLSearchParams(location.search);
+    const hash = new URLSearchParams(location.hash.slice(1));
     const providerError =
-      params.get("error_description") || params.get("error");
+      params.get("error_description") ||
+      params.get("error") ||
+      hash.get("error_description") ||
+      hash.get("error");
+    setError("");
+    history.replaceState(history.state, "", location.pathname);
     if (providerError) {
       setError(
         "Google sign-in was cancelled or declined. You can try again from the login page.",
       );
-      history.replaceState(null, "", "/auth/callback");
       return;
     }
-    complete(params.get("code"))
+    completeGoogleSignIn(params.get("code"), params.get("sb_flow_id"))
       .then(({ data }) => {
         if (!active) return;
         login(data);
@@ -50,13 +46,12 @@ export default function OAuthCallbackPage() {
               err.message ||
               "Google sign-in couldn't be completed.",
           );
-          history.replaceState(null, "", "/auth/callback");
         }
       });
     return () => {
       active = false;
     };
-  }, []);
+  }, [location.search, location.hash, location.pathname]);
   return (
     <div className="session-screen">
       <p className="eyebrow">GOOGLE SIGN-IN</p>
@@ -68,8 +63,7 @@ export default function OAuthCallbackPage() {
             className="btn-primary"
             to="/login"
             onClick={() => {
-              completion = undefined;
-              void clearGoogleSession();
+              void clearGoogleSession().catch(() => {});
             }}
           >
             Back to sign in

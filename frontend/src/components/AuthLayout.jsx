@@ -25,10 +25,10 @@ export default function AuthLayout({
       <DotField
         dotRadius={0.9}
         dotSpacing={22}
-        color="rgba(92, 125, 88, 0.55)"
+        color="rgba(143, 151, 247, 0.55)"
       />
       <ColorBends
-        color="#9BB86B"
+        color="#7c6cf0"
         speed={0.2}
         frequency={0.85}
         noise={0.15}
@@ -56,7 +56,11 @@ export default function AuthLayout({
             things get better.
           </p>
           {showBook ? (
-            <CampusBook />
+            <Suspense
+              fallback={<div className="campus-book" aria-hidden="true" />}
+            >
+              <CampusBook />
+            </Suspense>
           ) : (
             <Suspense fallback={<div className="auth-demo-fallback" />}>
               <SpotlightCard className="auth-demo-card">

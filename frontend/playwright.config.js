@@ -1,6 +1,7 @@
 import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests",
+  testIgnore: "**/google-auth.spec.js",
   timeout: 30000,
   expect: { timeout: 8000 },
   fullyParallel: false,

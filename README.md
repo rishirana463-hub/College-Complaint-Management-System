@@ -102,19 +102,24 @@ to the frontend or commit any `.env` file.
 
 ## Sample Test Data
 
-The seed command below is for a disposable development database. It replaces existing users and tickets.
+With `MONGO_URI` unset, starting the backend creates a temporary demo workspace with 12 example complaints across all eight categories. Examples include locations, pending/in-progress/resolved statuses, priorities, overdue deadlines, support replies, faculty assignments, and activity history. They are labeled `[Demo example]` in the description. Temporary data disappears when the backend stops.
 
-Run the seed script from `backend` after MongoDB is ready:
+For a disposable persistent development database, set `MONGO_URI` and run this from `backend`:
 
 ```bash
-npm run seed
+npm run seed -- --confirm-demo
 ```
+
+The seed is additive: it never deletes users or complaints, and repeated runs preserve edits without adding duplicate examples. It refuses production mode or accounts whose existing roles/passwords conflict with the demo identities. Normal startup never adds demo accounts to a configured persistent database. Do not use these public credentials on a live deployment.
 
 Demo users:
 
 - Admin: `admin@college.com` / `admin123`
 - Student: `rahul@student.com` / `student123`
 - Student: `priya@student.com` / `student123`
+- Faculty: `faculty@college.com` / `faculty123`
+
+The admin sees all 12 examples. Each student sees only their own complaints, and faculty sees only the assigned Faculty-category examples. Signing in with a personal Google account does not expose another student's demo complaints.
 
 ## Workflow
 
