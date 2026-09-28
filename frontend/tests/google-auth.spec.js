@@ -65,6 +65,7 @@ test("Google button completes PKCE, persists login, and supports signing in agai
   await expect(page).toHaveURL(/\/dashboard$/);
   expect(calls).toEqual({ exchanges: 1, sessions: 1 });
   await page.reload();
+  await page.getByLabel("Account and appearance").click();
   await expect(
     page.getByRole("button", { name: "Sign out", exact: true }),
   ).toBeVisible();

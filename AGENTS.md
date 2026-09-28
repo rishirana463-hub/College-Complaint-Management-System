@@ -36,7 +36,9 @@
 - `docs/VERIFICATION.md`: test setup and previously recorded results.
 
 ## Current Focus
-- Navy/violet theme, Google callback fixes, and additive demo complaints, checked on 2026-09-25.
+- Login identity and panel effects (2026-09-28): local Campusdesk cap/chat artwork rendered with Componentry DitheredLogo, React Bits WarpText for the login name, and BorderGlow on the priority/queue/ticket panels. Keep plain-text/vector fallbacks, touch/reduced-motion behavior, visibility-based cleanup, and both upstream licenses. Login graphics must remain independent of form availability.
+- Student/staff interface refinement (2026-09-27): direct dashboard actions, matching priority counts and filters, removable filters, mobile ticket rows, and a navy complaint preview. Product priorities are recorded in `PRODUCT.md`.
+- Main navigation now uses a Componentry-derived magnetic bottom dock, with role-specific links and steady touch/reduced-motion controls. Keep the mobile navigation drawer, account-menu sign-out, and the upstream license in `frontend/src/components/ui/COMPONENTRY-LICENSE.md`.
 - Demo fixtures live in `backend/utils/demoData.js`; automatic seeding is limited to temporary local storage. Persistent development seeding requires `npm run seed -- --confirm-demo` and is disabled in production. Preserve existing data and edits.
 - `frontend/tests/theme.spec.js` checks login contrast, keyboard focus, and mobile layout. Google browser tests use a simulated provider; passing tests do not establish real Google consent or provider configuration.
 - The login book lives in `frontend/src/components/login/CampusBook.jsx`; preserve its existing behavior when doing unrelated work.

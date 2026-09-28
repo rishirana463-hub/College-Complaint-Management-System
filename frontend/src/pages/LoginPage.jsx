@@ -61,7 +61,6 @@ export default function LoginPage() {
   if (isAuthenticated) return <Navigate to={homeFor(auth.user.role)} replace />;
   return (
     <AuthLayout showBook showThemeToggle={false}>
-      <p className="eyebrow">WELCOME BACK</p>
       <h2>Make yourself at home.</h2>
       <p className="auth-subtitle">Sign in to your campus workspace.</p>
       <GoogleButton disabled={busy} />

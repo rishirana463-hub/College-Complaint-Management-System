@@ -13,6 +13,7 @@ import CampusBook from "./login/CampusBook";
 import "./login/CampusBook.css";
 import ColorBends from "./reactbits/ColorBends";
 import DotField from "./reactbits/DotField";
+import LoginIdentity from "./login/LoginIdentity";
 const SpotlightCard = lazy(() => import("./reactbits/SpotlightCard"));
 export default function AuthLayout({
   children,
@@ -21,7 +22,7 @@ export default function AuthLayout({
 }) {
   const { theme, toggleTheme } = useTheme();
   return (
-    <div className="auth-layout">
+    <div className={"auth-layout" + (showBook ? " auth-layout--branded" : "")}>
       <DotField
         dotRadius={0.9}
         dotSpacing={22}
@@ -38,12 +39,8 @@ export default function AuthLayout({
         fadeTop={0.75}
       />
       <section className="auth-story">
-        <Brand />
+        {showBook ? <LoginIdentity /> : <Brand />}
         <div className="auth-story-main">
-          <span className="auth-kicker">
-            <span className="live-dot" />
-            YOUR VOICE. REAL PROGRESS.
-          </span>
           <h1>
             A better campus
             <br />
@@ -104,7 +101,7 @@ export default function AuthLayout({
           </button>
         )}
         <div className="auth-mobile-brand">
-          <Brand />
+          {showBook ? <LoginIdentity /> : <Brand />}
         </div>
         <div className="auth-form-container">{children}</div>
         <footer>College Complaint & Ticket Management System</footer>

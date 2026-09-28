@@ -1,0 +1,23 @@
+.warp-text {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  overflow: hidden;
+  isolation: isolate;
+}
+.warp-text canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.warp-text-fallback {
+  justify-self: start;
+  margin-left: 4%;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.warp-text[data-rendered="true"] .warp-text-fallback {
+  visibility: hidden;
+}

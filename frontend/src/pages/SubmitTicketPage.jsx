@@ -60,7 +60,6 @@ export default function SubmitTicketPage() {
   return (
     <div className="page-stack">
       <PageHeader
-        eyebrow="LET'S MAKE IT BETTER"
         title="New complaint"
         subtitle="Tell us what's happening. We'll help you keep track of what happens next."
       />
@@ -81,11 +80,12 @@ export default function SubmitTicketPage() {
                 className="input"
                 placeholder="e.g. Wi-Fi is down in Hostel Block A"
                 required
+                aria-describedby="title-hint"
                 maxLength={160}
                 value={form.title}
                 onChange={(e) => set("title", e.target.value)}
               />
-              <span className="field-hint">
+              <span id="title-hint" className="field-hint">
                 Keep the title specific and easy to scan.{" "}
                 <span>{form.title.length}/160</span>
               </span>
@@ -158,6 +158,7 @@ export default function SubmitTicketPage() {
               What happened?
               <textarea
                 id="description"
+                aria-describedby="description-hint"
                 className="input"
                 required
                 rows={7}
@@ -166,7 +167,7 @@ export default function SubmitTicketPage() {
                 onChange={(e) => set("description", e.target.value)}
                 placeholder="Where is the issue? When did it start? Who is affected? Include anything the team needs to know."
               />
-              <span className="field-hint">
+              <span id="description-hint" className="field-hint">
                 Please avoid sharing passwords or sensitive personal
                 information.
               </span>
@@ -212,7 +213,7 @@ export default function SubmitTicketPage() {
         </form>
         <aside className="page-stack">
           <SpotlightCard className="preview-card">
-            <p className="eyebrow">LIVE PREVIEW</p>
+            <h2 className="preview-heading">Complaint preview</h2>
             <div className="preview-labels">
               <span className="subtle-tag">{form.category}</span>
               {isPrivate && (
@@ -222,16 +223,18 @@ export default function SubmitTicketPage() {
                 </span>
               )}
             </div>
-            <h2>
-              {form.title.trim() || "Your next step toward a better campus."}
-            </h2>
+            <h3>{form.title.trim() || "Your complaint title"}</h3>
             <p className="preview-description">
               {form.description.trim() ||
                 "Your complaint preview will appear here as you add details."}
             </p>
             <div className="preview-status">
               <span className="live-dot" />
-              Ready when you are
+              {form.title.trim() &&
+              form.description.trim() &&
+              (!isPrivate || form.assignedFaculty)
+                ? "Ready to submit"
+                : "Add your details to get started"}
             </div>
           </SpotlightCard>
           <section className="panel panel-padding">

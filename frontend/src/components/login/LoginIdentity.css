@@ -1,0 +1,66 @@
+.login-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(100%, 570px);
+  min-width: 0;
+}
+.login-identity-mark {
+  width: 100px;
+  height: 100px;
+  flex: 0 0 100px;
+  color: #a9b1fb;
+}
+.login-identity-name {
+  height: 100px;
+  flex: 1;
+  min-width: 0;
+}
+.dithered-logo {
+  position: relative;
+}
+.dithered-logo canvas,
+.dithered-logo-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.dithered-logo-fallback {
+  background: currentColor;
+  mask: var(--logo-image) center / 90% no-repeat;
+}
+.dithered-logo[data-rendered="true"] .dithered-logo-fallback {
+  visibility: hidden;
+}
+.auth-layout--branded .auth-story-main {
+  padding-top: 40px;
+}
+@media (max-width: 1100px) {
+  .login-identity-mark {
+    width: 76px;
+    height: 76px;
+    flex-basis: 76px;
+  }
+  .login-identity-name {
+    height: 76px;
+  }
+}
+@media (max-width: 700px) {
+  .login-identity {
+    gap: 2px;
+    max-width: 340px;
+  }
+  .login-identity-mark {
+    width: 64px;
+    height: 64px;
+    flex-basis: 64px;
+  }
+  .login-identity-name {
+    height: 64px;
+  }
+  .auth-layout--branded .auth-mobile-brand {
+    padding-top: 0;
+    padding-bottom: 18px;
+  }
+}

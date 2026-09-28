@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import PageHeader from "../components/PageHeader";
+import BorderGlow from "../components/reactbits/BorderGlow";
 import FilterBar from "../components/FilterBar";
 import TicketTable from "../components/TicketTable";
 import TicketBoard from "../components/TicketBoard";
@@ -26,6 +27,7 @@ import {
   sortTickets,
   exportTickets,
   isOverdue,
+  needsAttention,
   statuses,
 } from "../lib/tickets";
 
@@ -63,8 +65,11 @@ export default function TicketsPage() {
   const order = params.get("sort") || "newest";
   const mode = params.get("view") === "board" ? "board" : "list";
   const overdue = params.get("overdue") === "true";
+  const attention = params.get("attention") === "true";
   const tickets = sortTickets(
-    (resource.data || []).filter((t) => !overdue || isOverdue(t)),
+    (resource.data || []).filter(
+      (t) => (!overdue || isOverdue(t)) && (!attention || needsAttention(t)),
+    ),
     order,
   );
   const [pageState, setPageState] = useState({ query: "", page: 1 });
@@ -76,6 +81,18 @@ export default function TicketsPage() {
   );
   const visibleIds = selected.filter((id) => tickets.some((t) => t._id === id));
   const isStudent = auth.user.role === "student";
+  const activeFilters = [
+    ...Object.entries(filters).filter(([, value]) => value),
+    ...(overdue ? [["overdue", "Overdue"]] : []),
+    ...(attention ? [["attention", "Needs attention"]] : []),
+  ];
+  const resetFilters = () => {
+    const next = new URLSearchParams(params);
+    for (const key of [...Object.keys(filters), "overdue", "attention"])
+      next.delete(key);
+    setParams(next, { replace: true });
+    setSelected([]);
+  };
   const change = (key, value) => {
     const next = new URLSearchParams(params);
     value ? next.set(key, value) : next.delete(key);
@@ -143,7 +160,6 @@ export default function TicketsPage() {
   return (
     <div className="page-stack">
       <PageHeader
-        eyebrow="OPERATIONS / WORKSPACE"
         title={
           isStudent
             ? "My tickets"
@@ -151,7 +167,11 @@ export default function TicketsPage() {
               ? "Assigned tickets"
               : "All tickets"
         }
-        subtitle="Less searching. More moving things forward."
+        subtitle={
+          isStudent
+            ? "Track your complaints, read replies, and follow each resolution."
+            : "Find what needs attention, update progress, and keep requests moving."
+        }
         actions={
           <div className="toolbar-actions">
             <button
@@ -191,8 +211,17 @@ export default function TicketsPage() {
             Board
           </button>
         </div>
-        <span className="workspace-result-count">
-          {resource.loading ? "Updating..." : tickets.length + " requests"}
+        <span
+          className="workspace-result-count"
+          role="status"
+          aria-live="polite"
+        >
+          {resource.loading
+            ? "Updating..."
+            : resource.error
+              ? "Tickets unavailable"
+              : tickets.length +
+                (tickets.length === 1 ? " ticket" : " tickets")}
         </span>
         <label className="sort-control">
           Sort by
@@ -239,7 +268,8 @@ export default function TicketsPage() {
           ))}
         </div>
       )}
-      <section
+      <BorderGlow
+        as="section"
         className={
           mode === "list" ? "panel ticket-workspace" : "ticket-workspace"
         }
@@ -256,6 +286,13 @@ export default function TicketsPage() {
             </button>
           ))}
           <button
+            className={attention ? "selected" : ""}
+            aria-pressed={attention}
+            onClick={() => change("attention", attention ? "" : "true")}
+          >
+            Needs attention
+          </button>
+          <button
             className={overdue ? "selected" : ""}
             aria-pressed={overdue}
             onClick={() => change("overdue", overdue ? "" : "true")}
@@ -267,11 +304,26 @@ export default function TicketsPage() {
           filters={filters}
           isFaculty={auth.user.role === "faculty"}
           onChange={change}
-          onReset={() => {
-            setParams({ view: mode });
-            setSelected([]);
-          }}
         />
+        {activeFilters.length > 0 && (
+          <div className="active-filters" aria-label="Active filters">
+            <span>Filtered by</span>
+            {activeFilters.map(([key, value]) => (
+              <button
+                key={key}
+                className="filter-chip"
+                aria-label={"Remove " + key + " filter: " + value}
+                onClick={() => change(key, "")}
+              >
+                <span>{key === "search" ? "Search: " + value : value}</span>
+                <X size={14} aria-hidden="true" />
+              </button>
+            ))}
+            <button className="text-link" onClick={resetFilters}>
+              Reset filters
+            </button>
+          </div>
+        )}
         {!isStudent && visibleIds.length > 0 && (
           <div className="bulk-toolbar">
             <CheckCheck size={18} />
@@ -314,18 +366,27 @@ export default function TicketsPage() {
         ) : !tickets.length ? (
           <EmptyState
             title={
-              Object.values(filters).some(Boolean) || overdue
+              activeFilters.length
                 ? "No tickets match your filters"
                 : "No tickets yet"
             }
-            description="New requests will appear here. Try clearing your filters."
+            description={
+              activeFilters.length
+                ? "Try another search or clear your filters to see more tickets."
+                : isStudent
+                  ? "Submit your first complaint to follow its progress here."
+                  : "Requests will appear here when they are available to your account."
+            }
             action={
-              <button
-                className="btn-secondary"
-                onClick={() => setParams({ view: mode })}
-              >
-                Clear filters
-              </button>
+              activeFilters.length ? (
+                <button className="btn-secondary" onClick={resetFilters}>
+                  Clear filters
+                </button>
+              ) : isStudent ? (
+                <Link className="btn-primary" to="/submit">
+                  New complaint
+                </Link>
+              ) : undefined
             }
           />
         ) : mode === "board" ? (
@@ -387,7 +448,7 @@ export default function TicketsPage() {
             </div>
           </>
         )}
-      </section>
+      </BorderGlow>
       {mode === "board" && !isStudent && (
         <p className="field-hint">
           Drag cards between stages, or use each card's status menu with your

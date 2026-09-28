@@ -3,6 +3,9 @@ export const isOverdue = (ticket) =>
   ticket.status !== "Resolved" &&
   ticket.dueAt &&
   new Date(ticket.dueAt) < new Date();
+export const needsAttention = (ticket) =>
+  ticket.status !== "Resolved" &&
+  (ticket.priority === "High" || Boolean(isOverdue(ticket)));
 export const ageLabel = (date) => {
   const days = Math.max(
     0,

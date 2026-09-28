@@ -1,0 +1,259 @@
+.dock-shell .workspace-main {
+  width: 100%;
+  margin-left: 0;
+}
+.dock-shell .main-content {
+  max-width: 1400px;
+  padding-bottom: calc(136px + env(safe-area-inset-bottom, 0px));
+}
+.dock-shell .topbar {
+  gap: 24px;
+}
+.dock-shell .topbar-actions,
+.dock-shell .command-trigger {
+  flex-shrink: 0;
+}
+.dock-shell .command-trigger {
+  white-space: nowrap;
+}
+.workspace-brand {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.workspace-brand .brand {
+  font-size: 22px;
+}
+.workspace-brand .brand small {
+  display: none;
+}
+.dock-shell .breadcrumb {
+  margin-right: auto;
+  min-width: 0;
+}
+.dock-shell .breadcrumb strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dock-shell .profile-signout {
+  width: 100%;
+  margin-top: 18px;
+}
+.dock-position {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  inset-inline: 12px;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.magnetic-dock {
+  --dock-size: 52px;
+  --dock-slot: 72px;
+  pointer-events: auto;
+  padding: 12px 14px 10px;
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: 0 12px 40px #13152a26;
+}
+[data-theme="dark"] .magnetic-dock {
+  background: var(--surface-soft);
+  box-shadow: 0 12px 40px #05061380;
+}
+.magnetic-dock ul {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.magnetic-dock-slot {
+  position: relative;
+  width: var(--dock-slot);
+  flex-shrink: 0;
+}
+.magnetic-dock-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-height: 78px;
+  padding: 2px;
+  border-radius: 14px;
+  color: var(--muted);
+  -webkit-tap-highlight-color: transparent;
+}
+.magnetic-dock-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.magnetic-dock-tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--dock-size);
+  height: var(--dock-size);
+  flex-shrink: 0;
+  border-radius: 15px;
+  background: var(--surface-soft);
+  color: var(--text);
+  transform-origin: center bottom;
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+[data-theme="dark"] .magnetic-dock-tile {
+  background: var(--surface-hover);
+}
+.magnetic-dock-icon {
+  display: flex;
+  pointer-events: none;
+}
+.magnetic-dock-link:is(:hover, :focus-visible) .magnetic-dock-tile {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.magnetic-dock-link.is-active .magnetic-dock-tile {
+  color: var(--ink);
+  background: var(--citrus);
+}
+.magnetic-dock-link.is-active .magnetic-dock-caption {
+  color: var(--accent-text);
+  font-weight: 700;
+}
+.magnetic-dock-caption {
+  font-size: 11px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.magnetic-dock-indicator {
+  position: absolute;
+  bottom: -7px;
+  left: calc(50% - 2px);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.magnetic-dock-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--surface);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+[data-theme="dark"] .magnetic-dock-badge {
+  color: var(--ink);
+}
+.magnetic-dock-tooltip {
+  position: absolute;
+  bottom: calc(100% + 30px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--surface);
+  background: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 120ms;
+}
+.magnetic-dock-tooltip.is-visible {
+  visibility: visible;
+  opacity: 1;
+}
+body:has(.dock-shell) .toast-region {
+  bottom: calc(146px + env(safe-area-inset-bottom, 0px));
+}
+html:has(.dock-shell) {
+  scroll-padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px));
+}
+@media (max-width: 900px) {
+  .dock-shell .topbar {
+    gap: 16px;
+  }
+  .workspace-brand .brand {
+    font-size: 20px;
+  }
+  .dock-shell .command-trigger .command-label,
+  .dock-shell .command-trigger kbd {
+    display: none;
+  }
+  .dock-shell .command-trigger {
+    justify-content: center;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 8px;
+  }
+}
+@media (max-width: 700px) {
+  .workspace-brand {
+    display: none;
+  }
+  .dock-shell .topbar {
+    gap: 8px;
+  }
+  .dock-shell .main-content {
+    padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px));
+  }
+  .dock-position {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .magnetic-dock {
+    --dock-size: 40px;
+    --dock-slot: clamp(44px, 12vw, 56px);
+    padding: 10px 8px 8px;
+    border-radius: 20px;
+  }
+  .magnetic-dock ul {
+    gap: 2px;
+  }
+  .magnetic-dock-link {
+    min-height: 68px;
+    gap: 11px;
+  }
+  .magnetic-dock-tile {
+    border-radius: 12px;
+  }
+  .magnetic-dock-icon svg {
+    width: 23px;
+    height: 23px;
+  }
+  .magnetic-dock-caption {
+    font-size: 10px;
+  }
+  .magnetic-dock-slot:first-child .magnetic-dock-tooltip {
+    left: 0;
+    transform: none;
+  }
+  .magnetic-dock-slot:last-child .magnetic-dock-tooltip {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+  body:has(.dock-shell) .toast-region {
+    bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .magnetic-dock-tooltip,
+  .magnetic-dock-tile {
+    transition: none;
+  }
+}

@@ -1,7 +1,6 @@
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { categories } from "../lib/navigation";
-export default function FilterBar({ filters, onChange, isFaculty, onReset }) {
-  const active = Object.values(filters).some(Boolean);
+export default function FilterBar({ filters, onChange, isFaculty }) {
   return (
     <div className="filter-bar">
       <div className="search-input">
@@ -30,17 +29,6 @@ export default function FilterBar({ filters, onChange, isFaculty, onReset }) {
       )}
       <select
         className="input filter-select"
-        aria-label="Filter by status"
-        value={filters.status}
-        onChange={(e) => onChange("status", e.target.value)}
-      >
-        <option value="">All statuses</option>
-        <option>Pending</option>
-        <option>In Progress</option>
-        <option>Resolved</option>
-      </select>
-      <select
-        className="input filter-select"
         aria-label="Filter by priority"
         value={filters.priority}
         onChange={(e) => onChange("priority", e.target.value)}
@@ -50,15 +38,6 @@ export default function FilterBar({ filters, onChange, isFaculty, onReset }) {
         <option>Medium</option>
         <option>High</option>
       </select>
-      {active && (
-        <button
-          className="icon-button"
-          onClick={onReset}
-          aria-label="Clear filters"
-        >
-          <X size={17} />
-        </button>
-      )}
     </div>
   );
 }

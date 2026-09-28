@@ -50,7 +50,9 @@ test("student overview, filter drill-down, persistence, and sign-out", async ({
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await login(page);
-  await expect(page.getByText("PRIORITY DESK", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Priority desk", exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole("link", { name: /Total tickets/ })).toContainText(
     "8",
   );
@@ -64,6 +66,7 @@ test("student overview, filter drill-down, persistence, and sign-out", async ({
   await expect(page.getByRole("table")).toBeVisible();
   await page.reload();
   await expect(page.getByRole("heading", { name: "My tickets" })).toBeVisible();
+  await page.getByLabel("Account and appearance").click();
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
   await page.goto("/admin");
@@ -78,7 +81,9 @@ test("theme persists, command palette supports keyboard, and role routes are gat
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.getByText("PRIORITY DESK", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Priority desk", exact: true }),
+  ).toBeVisible();
   await settleDashboard(page);
   await page.screenshot({
     path: "artifacts/dashboard-dark.png",
@@ -195,7 +200,9 @@ test("admin summary, ticket controls, and accessibility in both themes", async (
   page,
 }) => {
   await login(page, "admin");
-  await expect(page.getByText("PRIORITY DESK", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Priority desk", exact: true }),
+  ).toBeVisible();
   await settleDashboard(page);
   await page.screenshot({
     path: "artifacts/admin-dashboard.png",
@@ -211,7 +218,7 @@ test("admin summary, ticket controls, and accessibility in both themes", async (
     .analyze();
   expect(dark.violations).toEqual([]);
   await page
-    .getByRole("link", { name: "Open the priority workspace", exact: true })
+    .getByRole("link", { name: "View tickets needing attention", exact: true })
     .click();
   await page
     .getByRole("link", {
@@ -231,7 +238,9 @@ test("mobile navigation closes with Escape and pages do not overflow", async ({
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await login(page);
-  await expect(page.getByText("PRIORITY DESK", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Priority desk", exact: true }),
+  ).toBeVisible();
   await settleDashboard(page);
   await page.screenshot({
     path: "artifacts/dashboard-mobile.png",
@@ -298,6 +307,7 @@ test("reduced motion, registration, Google configuration and callback errors", a
           .filter((animation) => animation.playState === "running").length,
     ),
   ).toBe(0);
+  await page.getByLabel("Account and appearance").click();
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await page.goto("/auth/callback?error=access_denied");
   await expect(

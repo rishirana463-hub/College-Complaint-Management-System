@@ -136,6 +136,7 @@ test("deadlines persist, overdue filters work, and inbox reads survive refresh",
   await expect(page.getByLabel("Set deadline")).toHaveValue("2025-01-01T12:00");
   await page.goto("/tickets?overdue=true&view=board");
   await expect(page.getByText("Overdue Jan 1")).toBeVisible();
+  await page.getByLabel("Account and appearance").click();
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await login(page, "student");
   await page.goto("/inbox");
@@ -189,6 +190,8 @@ test("command search finds actual tickets and students cannot manage board statu
   page,
 }) => {
   await login(page, "student");
+  // The URL changes before the lazy workspace and its keyboard listener mount.
+  await expect(page.getByRole("button", { name: "Quick search", exact: true })).toBeVisible();
   await page.keyboard.press("Control+k");
   await page.getByLabel("Search commands").fill("water cooler");
   await page

@@ -1,25 +1,36 @@
-import { Suspense, useEffect, useState } from "react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
-import { Menu, Search, Sun, Moon, ChevronDown, Bell } from "lucide-react";
-import Sidebar from "./Sidebar";
+import {
+  Menu,
+  Search,
+  Sun,
+  Moon,
+  ChevronDown,
+  Bell,
+  LogOut,
+} from "lucide-react";
+import Sidebar, { Brand } from "./Sidebar";
+import DockNavigation from "./DockNavigation";
 import CommandPalette from "./CommandPalette";
 import Dialog from "./Dialog";
 import { ErrorBoundary, Skeleton } from "./States";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { navigationFor } from "../lib/navigation";
+import { homeFor, navigationFor } from "../lib/navigation";
 import { googleConfigured, startGoogleSignIn } from "../services/googleAuth";
 import { useToast } from "../context/ToastContext";
 import useResource from "../hooks/useResource";
 export default function Layout() {
-  const { auth } = useAuth();
+  const { auth, logout } = useAuth();
+  const navigate = useNavigate();
   const { notify } = useToast();
   const { theme, preference, setPreference, toggleTheme } = useTheme();
   const location = useLocation();
   const reduced = useReducedMotion();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
+  const accountMenu = useRef(null);
   const inbox = useResource("/tickets/inbox");
   useEffect(() => {
     const refresh = () => {
@@ -49,17 +60,22 @@ export default function Layout() {
   useEffect(() => {
     document.title = title + " | Campusdesk";
     setMobileOpen(false);
+    accountMenu.current?.removeAttribute("open");
   }, [location.pathname, title]);
   return (
-    <div className="app-shell">
+    <div className="app-shell dock-shell">
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
-      <aside className="desktop-sidebar">
-        <Sidebar />
-      </aside>
       <div className="workspace-main">
         <header className="topbar">
+          <Link
+            className="workspace-brand"
+            to={homeFor(auth.user.role)}
+            aria-label="Campusdesk home"
+          >
+            <Brand />
+          </Link>
           <div className="breadcrumb">
             <button
               className="icon-button mobile-menu"
@@ -68,13 +84,12 @@ export default function Layout() {
             >
               <Menu size={21} />
             </button>
-            <span className="breadcrumb-workspace">Workspace</span>
-            <span className="breadcrumb-divider">/</span>
             <strong>{title}</strong>
           </div>
           <div className="topbar-actions">
             <button
               className="command-trigger"
+              aria-label="Quick search"
               onClick={() => setCommandOpen(true)}
             >
               <Search size={17} />
@@ -103,7 +118,20 @@ export default function Layout() {
             >
               {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <details className="profile-menu">
+            <details
+              className="profile-menu"
+              ref={accountMenu}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.currentTarget.removeAttribute("open");
+                  event.currentTarget.querySelector("summary")?.focus();
+                }
+              }}
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget))
+                  event.currentTarget.removeAttribute("open");
+              }}
+            >
               <summary aria-label="Account and appearance">
                 <span className="avatar">
                   {auth.user.name?.slice(0, 1).toUpperCase()}
@@ -141,6 +169,16 @@ export default function Layout() {
                 {auth.user.googleConnected && (
                   <p className="field-hint">Google account connected</p>
                 )}
+                <button
+                  className="btn-secondary profile-signout"
+                  onClick={() => {
+                    logout();
+                    navigate("/login", { replace: true });
+                    notify("You have been signed out.");
+                  }}
+                >
+                  <LogOut size={17} /> Sign out
+                </button>
               </div>
             </details>
           </div>
@@ -164,6 +202,9 @@ export default function Layout() {
           </footer>
         </main>
       </div>
+      <DockNavigation
+        unreadCount={(inbox.data || []).filter((event) => !event.read).length}
+      />
       <Dialog
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
